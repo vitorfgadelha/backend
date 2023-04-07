@@ -35,3 +35,8 @@ class Participant(models.Model):
 
     def __str__(self):
         return self.name
+
+class Event(models.Model):
+    name = models.CharField('Name', max_length=200)
+    date = models.DateField('Date')
+    file = models.FileField('File',upload_to ='events/')

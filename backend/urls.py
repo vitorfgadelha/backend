@@ -5,10 +5,11 @@ from participants import views
 from django.urls import include, path
 
 from rest_framework import routers
-from participants.views import ParticipantViewSet
+from participants.views import ParticipantViewSet, EventViewSet
 
 api_router = routers.DefaultRouter()
 api_router.register(r"participants", ParticipantViewSet)
+api_router.register(r"events", EventViewSet)
 
 urlpatterns = [
     path("", include(api_router.urls)),
