@@ -22,16 +22,16 @@ class Participant(models.Model):
         ('XG','XG'),
     )
 
-    bib = models.IntegerField(unique=True)
-    name = models.CharField('Name', max_length=240)
-    gender = models.CharField(max_length=1, choices=GENDER,default=None)
-    dob = models.DateField('DoB')
-    age = models.IntegerField('Age')
-    cpf = models.CharField('CPF',max_length=15)
-    course = models.CharField('Course', max_length=50)
-    shirt = models.CharField('Shirt', choices=SHIRT, max_length=3)
+    bib = models.IntegerField(unique=True,primary_key=True)
+    name = models.CharField('Name', max_length=240, null=True)
+    gender = models.CharField(max_length=1, choices=GENDER,default=None,null=True)
+    dob = models.DateField('DoB',null=True)
+    cpf = models.CharField('CPF',max_length=15,null=True)
+    course = models.CharField('Course', max_length=50,null=True)
+    shirt = models.CharField('Shirt', choices=SHIRT, max_length=3,null=True)
     delivered = models.BooleanField('Delivered', default=False)
     obs = models.CharField('Obs', max_length=240, null=True)
+    updated_at = models.DateTimeField(auto_now=True,null=True)
 
     def __str__(self):
         return self.name
