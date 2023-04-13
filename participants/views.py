@@ -27,27 +27,6 @@ class ParticipantViewSet(viewsets.ModelViewSet):
     def count_not_delivered(*args, **kwargs):
         participant_count = Participant.objects.filter(delivered = False).count()
         return Response(str(participant_count))
-
-class EventViewSet(viewsets.ModelViewSet):
-    queryset = Event.objects.all().order_by('id')
-    serializer_class = EventSerializer
-
-    @action(detail=False)
-    def create_participants(*args, **kwargs):
-        workbook = load_workbook(filename="media/Corrida.xlsx")
-        sheet = workbook.active
-        for row in sheet.iter_rows(min_row=2, max_row=3501, min_col=1,max_col=8,values_only=True):
-            if row[0] != '':
-                participant = Participant(bib=row[0],
-                                      name=row[1],
-                                      gender=row[2],
-                                      dob=row[3],
-                                      cpf=row[4],
-                                      course=row[5],
-                                      shirt=row[6],
-                                      delivered='False')
-                participant.save()
-        return Response('Success, all participants added.')
     
     @action(detail=False)
     def generate_report(*args, **kwargs):
@@ -78,3 +57,24 @@ class EventViewSet(viewsets.ModelViewSet):
             i = i + 1
         book.save(filename="media/Report.xlsx")
         return Response('Success, report generated successfully.')
+
+class EventViewSet(viewsets.ModelViewSet):
+    queryset = Event.objects.all().order_by('id')
+    serializer_class = EventSerializer
+
+    @action(detail=False)
+    def create_participants(*args, **kwargs):
+        workbook = load_workbook(filename="media/Corrida.xlsx")
+        sheet = workbook.active
+        for row in sheet.iter_rows(min_row=2, max_row=3501, min_col=1,max_col=8,values_only=True):
+            if row[0] != '':
+                participant = Participant(bib=row[0],
+                                      name=row[1],
+                                      gender=row[2],
+                                      dob=row[3],
+                                      cpf=row[4],
+                                      course=row[5],
+                                      shirt=row[6],
+                                      delivered='False')
+                participant.save()
+        return Response('Success, all participants added.')
