@@ -53,7 +53,8 @@ class EventViewSet(viewsets.ModelViewSet):
     def generate_report(*args, **kwargs):
         book = Workbook()
         sheet = book.active
-        # participants = Participant.objects.all()
+        participants = Participant.objects.all().order_by('bib')
+        print(participants)
         sheet['A1'] = 'BIB'
         sheet['B1'] = 'NAME'
         sheet['C1'] = 'SEXO'
@@ -62,17 +63,18 @@ class EventViewSet(viewsets.ModelViewSet):
         sheet['F1'] = 'PROVA'
         sheet['G1'] = 'CAMISA'
         sheet['H1'] = 'ENTREGUE'
-        # for i in range(2,5):
-        #     for participant in participants:
-        #         print(participant)
-                # sheet['A' + str(i)] = participant.bib
-                # sheet['B' + str(i)] = participant.name
-                # sheet['C' + str(i)] = participant.gender
-                # sheet['D' + str(i)] = participant.dob
-                # sheet['E' + str(i)] = participant.cpf
-                # sheet['F' + str(i)] = participant.course
-                # sheet['G' + str(i)] = participant.shirt
-                # sheet['H' + str(i)] = participant.delivered
-            # print(participants)
+        sheet['I1'] = 'ATUALIZADO'
+        i = 2
+        for participant in participants:
+            sheet['A' + str(i)] = participant.bib
+            sheet['B' + str(i)] = participant.name
+            sheet['C' + str(i)] = participant.gender
+            sheet['D' + str(i)] = participant.dob
+            sheet['E' + str(i)] = participant.cpf
+            sheet['F' + str(i)] = participant.course
+            sheet['G' + str(i)] = participant.shirt
+            sheet['H' + str(i)] = participant.delivered
+            sheet['I' + str(i)] = str(participant.updated_at)
+            i = i + 1
         book.save(filename="media/Report.xlsx")
         return Response('Success, report generated successfully.')
