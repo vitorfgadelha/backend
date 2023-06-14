@@ -64,17 +64,28 @@ class EventViewSet(viewsets.ModelViewSet):
 
     @action(detail=False)
     def create_participants(*args, **kwargs):
-        workbook = load_workbook(filename="media/Corrida.xlsx")
+        workbook = load_workbook(filename="media/Corrida.xlsx",read_only=True)
         sheet = workbook.active
-        for row in sheet.iter_rows(min_row=2, max_row=3501, min_col=1,max_col=8,values_only=True):
+        for row in sheet.iter_rows(min_row=2, max_row=1351, min_col=1,max_col=8,values_only=True):
             if row[0] != '':
-                participant = Participant(bib=row[0],
-                                      name=row[1],
-                                      gender=row[2],
-                                      dob=row[3],
-                                      cpf=row[4],
-                                      course=row[5],
-                                      shirt=row[6],
-                                      delivered='False')
+                try:
+                    participant = Participant(bib=row[0],
+                                          name=row[1].upper(),
+                                          gender=row[2],
+                                          dob=row[3],
+                                          cpf=row[4],
+                                          course=row[5],
+                                          shirt=row[6],
+                                          delivered='False')
+                except:
+                    participant = Participant(bib=row[0],
+                                          name=row[1],
+                                          gender=row[2],
+                                          dob=row[3],
+                                          cpf=row[4],
+                                          course=row[5],
+                                          shirt=row[6],
+                                          delivered='False')
+                print(participant.bib)
                 participant.save()
         return Response('Success, all participants added.')

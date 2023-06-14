@@ -7,6 +7,8 @@ class Participant(models.Model):
     )
 
     SHIRT = (
+        ('',''),
+        (' ',' '),
         ('2','2'),
         ('4','4'),
         ('6','6'),
@@ -14,6 +16,9 @@ class Participant(models.Model):
         ('10','10'),
         ('11','11'),
         ('12','12'),
+        ('BL P','BL P'),
+        ('BL M','BL M'),
+        ('BL G','BL G'),
         ('PP','PP'),
         ('P','P'),
         ('M','M'),
@@ -28,7 +33,7 @@ class Participant(models.Model):
     dob = models.DateField('DoB',null=True)
     cpf = models.CharField('CPF',max_length=15,null=True)
     course = models.CharField('Course', max_length=50,null=True)
-    shirt = models.CharField('Shirt', choices=SHIRT, max_length=3,null=True)
+    shirt = models.CharField('Shirt', choices=SHIRT, max_length=5,null=True)
     delivered = models.BooleanField('Delivered', default=False)
     obs = models.CharField('Obs', max_length=240, null=True)
     updated_at = models.DateTimeField(auto_now=True,null=True)
