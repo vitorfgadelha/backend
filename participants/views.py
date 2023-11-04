@@ -7,9 +7,7 @@ from rest_framework.decorators import action
 from rest_framework import generics
 from django.core.paginator import Paginator
 
-import json
 from openpyxl import load_workbook, Workbook
-import datetime 
 
 
 class ParticipantViewSet(viewsets.ModelViewSet):
@@ -33,7 +31,6 @@ class ParticipantViewSet(viewsets.ModelViewSet):
         book = Workbook()
         sheet = book.active
         participants = Participant.objects.all().order_by('bib')
-        print(participants)
         sheet['A1'] = 'BIB'
         sheet['B1'] = 'NAME'
         sheet['C1'] = 'SEXO'
@@ -66,13 +63,14 @@ class EventViewSet(viewsets.ModelViewSet):
     def create_participants(*args, **kwargs):
         workbook = load_workbook(filename="media/Corrida.xlsx")
         sheet = workbook.active
-        for row in sheet.iter_rows(min_row=2, max_row=3501, min_col=1,max_col=8,values_only=True):
+        print(sheet.max_row)
+        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1,max_col=8,values_only=True):
             if row[0] != '':
                 participant = Participant(bib=row[0],
                                       name=row[1],
                                       gender=row[2],
                                       dob=row[3],
-                                      cpf=row[4],
+                                      cpf=str(row[4]).zfill(11),
                                       course=row[5],
                                       shirt=row[6],
                                       delivered='False')

@@ -4,6 +4,7 @@ class Participant(models.Model):
     GENDER = (
         ('M', 'Male'),
         ('F', 'Female'),
+        ('MX', 'Mixed')
     )
 
     SHIRT = (
@@ -24,7 +25,7 @@ class Participant(models.Model):
 
     bib = models.IntegerField(unique=True,primary_key=True)
     name = models.CharField('Name', max_length=240, null=True)
-    gender = models.CharField(max_length=1, choices=GENDER,default=None,null=True)
+    gender = models.CharField(max_length=2, choices=GENDER,default=None,null=True)
     dob = models.DateField('DoB',null=True)
     cpf = models.CharField('CPF',max_length=15,null=True)
     course = models.CharField('Course', max_length=50,null=True)
