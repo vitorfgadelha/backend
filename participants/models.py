@@ -30,8 +30,9 @@ class Participant(models.Model):
     course = models.CharField('Course', max_length=50,null=True)
     shirt = models.CharField('Shirt', choices=SHIRT, max_length=3,null=True)
     delivered = models.BooleanField('Delivered', default=False)
-    obs = models.CharField('Obs', max_length=240, null=True)
+    obs = models.CharField('Obs', max_length=100, null=True)
     updated_at = models.DateTimeField(auto_now=True,null=True)
+    type = models.CharField('Type', max_length=50, null=True)
 
     def __str__(self):
         return self.name

@@ -11,6 +11,7 @@ import json
 from openpyxl import load_workbook, Workbook
 import datetime 
 
+import time
 
 class ParticipantViewSet(viewsets.ModelViewSet):
     queryset = Participant.objects.all().order_by('bib')
@@ -64,9 +65,10 @@ class EventViewSet(viewsets.ModelViewSet):
 
     @action(detail=False)
     def create_participants(*args, **kwargs):
+        start_time = time.time()
         workbook = load_workbook(filename="media/Corrida.xlsx")
         sheet = workbook.active
-        for row in sheet.iter_rows(min_row=2, max_row=3501, min_col=1,max_col=8,values_only=True):
+        for row in sheet.iter_rows(min_row=2, max_row=1001, min_col=1,max_col=8,values_only=True):
             if row[0] != '':
                 participant = Participant(bib=row[0],
                                       name=row[1],
@@ -77,4 +79,5 @@ class EventViewSet(viewsets.ModelViewSet):
                                       shirt=row[6],
                                       delivered='False')
                 participant.save()
+        print("--- %s seconds ---" % (time.time() - start_time))
         return Response('Success, all participants added.')
