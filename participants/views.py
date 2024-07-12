@@ -1,93 +1,142 @@
-from rest_framework import viewsets, filters
-
+from rest_framework import viewsets, filters, pagination
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from openpyxl import load_workbook, Workbook
 from .models import Participant, Event
 from .serializers import ParticipantSerializer, EventSerializer
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework import generics
-from django.core.paginator import Paginator
-
-import json
-from openpyxl import load_workbook, Workbook
-import datetime 
-
 import time
+from django.utils import timezone
+
+# Pagination class with page size set to 100
+class ParticipantPagination(pagination.PageNumberPagination):
+    page_size = 100
+
+    def get_paginated_response(self, data):
+        first_id = data[0]['id'] if data else None
+        last_id = data[-1]['id'] if data else None
+        return Response({
+            'links': {
+                'next': self.get_next_link(),
+                'previous': self.get_previous_link()
+            },
+            'count': self.page.paginator.count,
+            'results': data,
+            'first_id': first_id,
+            'last_id': last_id,
+        })
 
 class ParticipantViewSet(viewsets.ModelViewSet):
-    queryset = Participant.objects.all().order_by('bib')
+    queryset = Participant.objects.all().order_by('id')
     serializer_class = ParticipantSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name','cpf']
+    search_fields = ['name', 'cpf']
+    pagination_class = ParticipantPagination
+    
+    @action(detail=False)
+    def count_delivered(self, request):
+        participant_count = Participant.objects.filter(delivered=True).count()
+        return Response({'count': participant_count})
 
     @action(detail=False)
-    def count_delivered(*args, **kwargs):
-        participant_count = Participant.objects.filter(delivered = True).count()
-        return Response(str(participant_count))
-    
+    def count_not_delivered(self, request):
+        participant_count = Participant.objects.filter(delivered=False).count()
+        return Response({'count': participant_count})
+
     @action(detail=False)
-    def count_not_delivered(*args, **kwargs):
-        participant_count = Participant.objects.filter(delivered = False).count()
-        return Response(str(participant_count))
-    
-    @action(detail=False)
-    def generate_report(*args, **kwargs):
+    def generate_report(self, request):
+        participants = Participant.objects.all().order_by('id')
+
+        report_data = []
+        for participant in participants:
+            report_data.append({
+                'id': participant.id,
+                'chip': participant.chip,
+                'name': participant.name,
+                'gender': participant.gender,
+                'dob': participant.dob,
+                'cpf': participant.cpf,
+                'course': participant.course,
+                'shirt': participant.shirt,
+                'type': participant.type,
+                'team': participant.team,
+                'delivered': participant.delivered,
+                'updated_at': participant.updated_at.astimezone(timezone.utc).replace(tzinfo=None) if participant.updated_at else None,
+                'name_received': participant.name_received,
+                'nation': participant.nation,
+                'medal_record': participant.medal_record,
+                'finisher': participant.finisher,
+                'fisio': participant.fisio,
+                'extra_shirt': participant.extra_shirt,
+                'phone': participant.phone,
+                'email': participant.email,
+            })
+
+        filename = "media/Report.xlsx"
+        self.generate_excel_report(report_data, filename)
+        
+        return Response({'message': 'Success, report generated successfully.', 'file': filename})
+
+    def generate_excel_report(self, data, filename):
         book = Workbook()
         sheet = book.active
-        participants = Participant.objects.all().order_by('bib')
-        sheet['A1'] = 'BIB'
-        sheet['B1'] = 'CHIP'
-        sheet['C1'] = 'NOME'
-        sheet['D1'] = 'SEXO'
-        sheet['E1'] = 'DOB'
-        sheet['F1'] = 'CPF'
-        sheet['G1'] = 'PROVA'
-        sheet['H1'] = 'CAMISA'
-        sheet['I1'] = 'TIPO'
-        sheet['J1'] = 'EQUIPE'
-        sheet['K1'] = 'ENTREGUE'
-        sheet['L1'] = 'ATUALIZADO'
-        sheet['M1'] = 'OBS'
-        i = 2
-        for participant in participants:
-            sheet['A' + str(i)] = participant.bib
-            sheet['B' + str(i)] = participant.chip
-            sheet['C' + str(i)] = participant.name
-            sheet['D' + str(i)] = participant.gender
-            sheet['E' + str(i)] = participant.dob
-            sheet['F' + str(i)] = participant.cpf
-            sheet['G' + str(i)] = participant.course
-            sheet['H' + str(i)] = participant.shirt
-            sheet['I' + str(i)] = participant.type
-            sheet['J' + str(i)] = participant.team
-            sheet['K' + str(i)] = participant.delivered
-            sheet['L' + str(i)] = str(participant.updated_at)
-            sheet['M' + str(i)] = participant.obs
-            i = i + 1
-        book.save(filename="media/Report.xlsx")
-        return Response('Success, report generated successfully.')
+        sheet.append([
+            'ID', 'CHIP', 'NAME', 'GENDER', 'DOB', 'CPF', 'COURSE',
+            'SHIRT', 'TYPE', 'TEAM', 'DELIVERED', 'UPDATED AT', 'NAME RECEIVED',
+            'NATION', 'MEDAL RECORD', 'FINISHER', 'FISIO', 'EXTRA SHIRT',
+            'PHONE', 'EMAIL'
+        ])
+
+        for item in data:
+            sheet.append([
+                item['id'], item['chip'], item['name'], item['gender'], item['dob'], item['cpf'],
+                item['course'], item['shirt'], item['type'], item['team'], item['delivered'],
+                item['updated_at'], item['name_received'], item['nation'], item['medal_record'],
+                item['finisher'], item['fisio'], item['extra_shirt'], item['phone'], item['email']
+            ])
+
+        book.save(filename)
+
+    @action(detail=False)
+    def create_participants(self, request):
+        start_time = time.time()
+        file_path = request.data.get('file_path', "media/Entrega_Kits.xlsx")
+        workbook = load_workbook(filename=file_path)
+        sheet = workbook.active
+        
+        participants = []
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            if row[0]:
+                participant = Participant(
+                    id=row[0],
+                    chip=row[1],
+                    name=row[2].upper() if row[2] else None,
+                    gender=row[3],
+                    dob=row[4],
+                    cpf=str(row[5]).zfill(11),
+                    course=row[6],
+                    group=row[7],
+                    shirt=row[8],
+                    type=row[9],
+                    team=row[10],
+                    nation=row[11],
+                    medal_record=row[12],
+                    finisher=row[13],
+                    fisio=row[14],
+                    extra_shirt=row[15],
+                    phone=row[16],
+                    email=row[17],
+                    delivered=False,
+                    name_received=None,
+                    updated_at=None,
+                )
+                participants.append(participant)
+        
+        Participant.objects.bulk_create(participants)
+        elapsed_time = time.time() - start_time
+        print(f"--- {elapsed_time} seconds ---")
+        
+        return Response({'message': 'Success, all participants added.', 'time_taken': elapsed_time})
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by('id')
     serializer_class = EventSerializer
-
-    @action(detail=False)
-    def create_participants(*args, **kwargs):
-        start_time = time.time()
-        workbook = load_workbook(filename="media/Entrega_Kits.xlsx")
-        sheet = workbook.active
-        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1,max_col=sheet.max_column,values_only=True):
-            if row[0] != '':
-                participant = Participant(bib=row[0],
-                                          chip=row[1],
-                                          name=row[2],
-                                          gender=row[3],
-                                          dob=row[4],
-                                          cpf=str(row[5]).zfill(11),
-                                          course=row[6],
-                                          shirt=row[7],
-                                          type=row[8],
-                                          team=row[9],
-                                          delivered='False')
-                participant.save()
-        print("--- %s seconds ---" % (time.time() - start_time))
-        return Response('Success, all participants added.')

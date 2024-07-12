@@ -1,16 +1,13 @@
-from django.contrib import admin
-from django.urls import path, re_path, include
-from participants import views
-
-from django.urls import include, path
-
-from rest_framework import routers
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from participants.views import ParticipantViewSet, EventViewSet
 
-api_router = routers.DefaultRouter()
-api_router.register(r"events", EventViewSet)
-api_router.register(r"participants", ParticipantViewSet)
+# Cria um router para API
+router = DefaultRouter()
+router.register(r'events', EventViewSet)
+router.register(r'participants', ParticipantViewSet)
 
+# URLs da aplicação
 urlpatterns = [
-    path("", include(api_router.urls)),
+    path('', include(router.urls)),
 ]
