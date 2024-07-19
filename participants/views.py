@@ -29,7 +29,7 @@ class ParticipantViewSet(viewsets.ModelViewSet):
     queryset = Participant.objects.all().order_by('id')
     serializer_class = ParticipantSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name', 'cpf']
+    search_fields = ['id','name', 'cpf']
     pagination_class = ParticipantPagination
     
     @action(detail=False)
@@ -56,12 +56,10 @@ class ParticipantViewSet(viewsets.ModelViewSet):
                 'dob': participant.dob,
                 'cpf': participant.cpf,
                 'course': participant.course,
+                'group': participant.group,
                 'shirt': participant.shirt,
                 'type': participant.type,
                 'team': participant.team,
-                'delivered': participant.delivered,
-                'updated_at': participant.updated_at.astimezone(timezone.utc).replace(tzinfo=None) if participant.updated_at else None,
-                'name_received': participant.name_received,
                 'nation': participant.nation,
                 'medal_record': participant.medal_record,
                 'finisher': participant.finisher,
@@ -69,6 +67,9 @@ class ParticipantViewSet(viewsets.ModelViewSet):
                 'extra_shirt': participant.extra_shirt,
                 'phone': participant.phone,
                 'email': participant.email,
+                'delivered': participant.delivered,
+                'name_received': participant.name_received,
+                'updated_at': participant.updated_at.astimezone(timezone.utc).replace(tzinfo=None) if participant.updated_at else None,
             })
 
         filename = "media/Report.xlsx"
@@ -80,18 +81,16 @@ class ParticipantViewSet(viewsets.ModelViewSet):
         book = Workbook()
         sheet = book.active
         sheet.append([
-            'ID', 'CHIP', 'NAME', 'GENDER', 'DOB', 'CPF', 'COURSE',
-            'SHIRT', 'TYPE', 'TEAM', 'DELIVERED', 'UPDATED AT', 'NAME RECEIVED',
-            'NATION', 'MEDAL RECORD', 'FINISHER', 'FISIO', 'EXTRA SHIRT',
-            'PHONE', 'EMAIL'
+            'ID', 'CHIP', 'NAME', 'GENDER', 'DOB', 'CPF', 'COURSE','GROUP',
+            'SHIRT', 'TYPE', 'TEAM', 'NATION', 'MEDAL RECORD', 'FINISHER', 'FISIO', 'EXTRA SHIRT',
+            'PHONE', 'EMAIL', 'DELIVERED', 'NAME RECEIVED', 'UPDATED AT'           
         ])
 
         for item in data:
             sheet.append([
                 item['id'], item['chip'], item['name'], item['gender'], item['dob'], item['cpf'],
-                item['course'], item['shirt'], item['type'], item['team'], item['delivered'],
-                item['updated_at'], item['name_received'], item['nation'], item['medal_record'],
-                item['finisher'], item['fisio'], item['extra_shirt'], item['phone'], item['email']
+                item['course'], item['group'], item['shirt'], item['type'], item['team'], item['nation'], item['medal_record'],
+                item['finisher'], item['fisio'], item['extra_shirt'], item['phone'], item['email'], item['delivered'], item['name_received'], item['updated_at']
             ])
 
         book.save(filename)
